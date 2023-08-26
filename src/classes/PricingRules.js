@@ -12,6 +12,16 @@ class PricingRules {
     };
   }
 
+  resetState() {
+    this.discountCodes = {};
+    this.discount = 0;
+    this.promo = {
+      threeForTwo: {},
+      bulkDiscount: {},
+      bundle: {},
+    };
+  }
+
   addDiscountCode(promoCode, discount) {
     this.discountCodes[promoCode] = discount;
   }
@@ -38,6 +48,10 @@ class PricingRules {
   addBundlePromo(product, minQuantity, bonusProduct, bonusQuantity) {
     if (this.products[product] === undefined) {
       throw new InvalidItemException(product);
+    }
+
+    if (this.products[bonusProduct] === undefined) {
+      throw new InvalidItemException(bonusProduct);
     }
 
     this.promo.bundle[product] = { minQuantity, bonusProduct, bonusQuantity };
@@ -82,15 +96,14 @@ class PricingRules {
     if (bundlePromo.minQuantity > quantityToPay) {
       return;
     }
-
     const { bonusProduct, bonusQuantity } = bundlePromo;
 
-    let extraProductToAdd = cartInstance.items[bonusProduct];
+    const extraProductToAdd = cartInstance.items[bonusProduct];
     if (extraProductToAdd) {
       extraProductToAdd.quantity += bonusQuantity;
       extraProductToAdd.freebies += bonusQuantity;
     } else {
-      extraProductToAdd = {
+      cartInstance.items[bonusProduct] = {
         name: this.products[bonusProduct].name,
         quantity: 1,
         freebies: bonusQuantity,

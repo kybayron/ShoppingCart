@@ -7,6 +7,11 @@ class ShoppingCart {
     this.total = 0;
   }
 
+  resetState() {
+    this.items = {};
+    this.total = 0;
+  }
+
   #addProductToCart = (item) => {
     const { products } = this.pricingRules;
     if (products[item] === undefined) {
