@@ -4,7 +4,8 @@
   "description": "Shopping Cart Technical Challenge for Amaysim",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint-fix": "eslint ./src --fix",
+    "test": "nyc --reporter=lcov --reporter=text-summary mocha --exit --recursive"
   },
   "repository": {
     "type": "git",
@@ -18,6 +19,6 @@
   "devDependencies": {
     "chai": "^4.3.7",
     "mocha": "^10.2.0",
-    "sinon": "^15.2.0"
+    "nyc": "^15.1.0"
   }
 }
