@@ -1,0 +1,23 @@
+{
+  "name": "shopping-cart-amaysim",
+  "version": "1.0.0",
+  "description": "Shopping Cart Technical Challenge for Amaysim",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kybayron/ShoppingCart.git"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kybayron/ShoppingCart/issues"
+  },
+  "homepage": "https://github.com/kybayron/ShoppingCart#readme",
+  "devDependencies": {
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0",
+    "sinon": "^15.2.0"
+  }
+}
