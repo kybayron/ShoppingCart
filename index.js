@@ -75,13 +75,10 @@ function runScenario4() {
 }
 
 function main() {
-    
     runScenario1();
     runScenario2();
     runScenario3();
     runScenario4();
-    // console.log(cart.items);
-    // console.log(cart.total);
 }
 
 main();
