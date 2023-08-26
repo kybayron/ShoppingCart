@@ -4,7 +4,7 @@
   "description": "Shopping Cart Technical Challenge for Amaysim",
   "main": "index.js",
   "scripts": {
-    "lint-fix": "eslint ./src --fix",
+    "start": "node index.js",
     "test": "nyc --reporter=lcov --reporter=text-summary mocha --exit --recursive"
   },
   "repository": {
