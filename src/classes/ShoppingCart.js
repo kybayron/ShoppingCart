@@ -1,7 +1,6 @@
-import InvalidItemException from '../exceptions/InvalidItemException';
-import products from '../products';
+const InvalidItemException = require('../exceptions/InvalidItemException');
 
-export default class ShoppingCart {
+class ShoppingCart {
   constructor(pricingRules) {
     this.pricingRules = pricingRules;
     this.items = {};
@@ -9,23 +8,20 @@ export default class ShoppingCart {
   }
 
   #addProductToCart = (item) => {
+    const { products } = this.pricingRules;
     if (products[item] === undefined) {
       throw new InvalidItemException(item);
     }
 
-    let cartItems = this.items;
+    const cartItems = this.items;
     if (cartItems[item]) {
       cartItems[item].quantity += 1;
     } else {
-      cartItems = {
-        ...cartItems,
-        ...{
-          [item]: {
-            name: products[item].name,
-            quantity: 1,
-            freebies: 0,
-          },
-        },
+      cartItems[item] = {
+        name: products[item].name,
+        quantity: 1,
+        freebies: 0,
+        subTotal: 0,
       };
     }
 
@@ -37,3 +33,5 @@ export default class ShoppingCart {
     this.pricingRules.runPricingRules(this, item, promoCode);
   }
 }
+
+module.exports = ShoppingCart;

@@ -1,7 +1,7 @@
-export default class PricingRules {
+class PricingRules {
   constructor(products) {
     this.products = products;
-    this.discounts = {};
+    this.discountCodes = {};
     this.discount = 0;
     this.promo = {
       threeForTwo: {},
@@ -11,35 +11,25 @@ export default class PricingRules {
   }
 
   addDiscountCode(promoCode, discount) {
-    this.discounts[promoCode] = discount;
+    this.discountCodes[promoCode] = discount;
   }
 
   addThreeForTwoPromo(product) {
     this.promo.threeForTwo[product] = true;
   }
 
-  addBulkDiscountPromo(product, quantity, discountPrice) {
-    const { bulkDiscount } = this.promo;
-    this.bulkDiscount = {
-      ...bulkDiscount,
-      ...{
-        [product]: {
-          quantity,
-          discountPrice,
-        },
-      },
+  addBulkDiscountPromo(product, minQuantity, discountPrice) {
+    this.promo.bulkDiscount[product] = {
+      minQuantity,
+      discountPrice,
     };
   }
 
-  addBundlePromo(product, quantity, bonusProduct, bonusQuantity) {
-    const { bundle } = this.promo;
-    this.bundle = { ...bundle, ...{ [product]: { quantity, bonusProduct, bonusQuantity } } };
+  addBundlePromo(product, minQuantity, bonusProduct, bonusQuantity) {
+    this.promo.bundle[product] = { minQuantity, bonusProduct, bonusQuantity };
   }
 
   #evaluateThreeForTwoPromo(cart, productAdded) {
-    if (!this.promo.threeForTwo[productAdded]) {
-      return null;
-    }
     const cartInstance = cart;
 
     const { quantity, freebies } = cartInstance.items[productAdded];
@@ -54,88 +44,93 @@ export default class PricingRules {
   }
 
   #evaluateBulkDiscountPromo(cart, productAdded) {
-    const productPromo = this.promo.bulkDiscount[productAdded];
-
-    if (!productPromo) {
-      return null;
-    }
+    const bulkDiscountPromo = this.promo.bulkDiscount[productAdded];
 
     const cartInstance = cart;
 
     const { quantity, freebies } = cartInstance.items[productAdded];
     const quantityToPay = quantity - freebies;
-    if (productPromo.quantity > quantityToPay) {
+
+    if (bulkDiscountPromo.minQuantity > quantityToPay) {
       return null;
     }
 
-    return productPromo.discountPrice * quantity;
+    return bulkDiscountPromo.discountPrice * quantity;
   }
 
   #evaluateBundlePromo(cart, productAdded) {
-    const productPromo = this.promo.bundle[productAdded];
+    const bundlePromo = this.promo.bundle[productAdded];
+    const cartInstance = cart;
 
-    if (!productPromo) {
+    const { quantity, freebies } = cartInstance.items[productAdded];
+    const quantityToPay = quantity - freebies;
+
+    if (bundlePromo.minQuantity > quantityToPay) {
       return;
     }
-    const cartState = cart;
-    const productInCart = cartState.items[productAdded];
-    if (productPromo.quantity > productInCart.quantity) {
-      return;
-    }
 
-    const { bonusProduct, bonusQuantity } = productPromo;
+    const { bonusProduct, bonusQuantity } = bundlePromo;
 
-    if (cartState.items[bonusProduct]) {
-      cartState.items[bonusProduct].quantity += bonusQuantity;
-      cartState.items[bonusProduct].freebies += bonusQuantity;
+    if (cartInstance.items[bonusProduct]) {
+      cartInstance.items[bonusProduct].quantity += bonusQuantity;
+      cartInstance.items[bonusProduct].freebies += bonusQuantity;
     } else {
-      cartState.items = {
-        ...cartState.items,
-        ...{
-          [bonusProduct]: {
-            name: this.products[bonusProduct].name,
-            quantity: 1,
-            freebies: bonusQuantity,
-          },
-        },
+      cartInstance.items[bonusProduct] = {
+        name: this.products[bonusProduct].name,
+        quantity: 1,
+        freebies: bonusQuantity,
       };
     }
   }
 
   #getDiscountIfApplicable(promoCode) {
-    return this.discounts[promoCode] ?? 0;
+    return this.discountCodes[promoCode] ?? 0;
   }
 
   #applyDiscountIfApplicable = (cart, promoCode) => {
+    const cartInstance = cart;
     this.discount = this.#getDiscountIfApplicable(promoCode);
 
-    if (cart.discount > 0) {
-      return cart.total * (1 - cart.discount);
+    if (this.discount > 0) {
+      cartInstance.total *= (1 - this.discount);
     }
-
-    return cart.total;
   };
 
-  #computeTotal(cart) {
+  #computeTotal(cart, productAdded, newSubTotal) {
     const cartInstance = cart;
-    Object.entries(cartInstance.items).forEach(([productCode, itemInCart]) => {
-      cartInstance.total = 0;
-      if (itemInCart.subTotal) {
-        cartInstance.total += itemInCart.subTotal;
-      } else {
-        cartInstance.total += this.products[productCode].price * (itemInCart.quantity - itemInCart.freebies);
-      }
-    });
+    const product = cartInstance.items[productAdded];
+    cartInstance.total -= product.subTotal;
+
+    if (newSubTotal) {
+      product.subTotal = newSubTotal;
+      cartInstance.total += newSubTotal;
+    } else {
+      const unitPrice = this.products[productAdded].price;
+      const quantityToPay = product.quantity - product.freebies;
+      product.subTotal = unitPrice * quantityToPay;
+
+      cartInstance.total += product.subTotal;
+    }
   }
 
   runPricingRules(cart, productAdded, promoCode) {
-    const cartInstance = cart;
+    let newSubTotal = 0;
 
-    cartInstance[productAdded].subTotal = this.#evaluateThreeForTwoPromo(cart, productAdded);
-    cartInstance[productAdded].subTotal = this.#evaluateBulkDiscountPromo(cart, productAdded);
-    this.#evaluateBundlePromo(cart, productAdded);
+    if (this.promo.threeForTwo[productAdded]) {
+      newSubTotal = this.#evaluateThreeForTwoPromo(cart, productAdded);
+    }
 
+    if (this.promo.bulkDiscount[productAdded]) {
+      newSubTotal = this.#evaluateBulkDiscountPromo(cart, productAdded);
+    }
+
+    if (this.promo.bundle[productAdded]) {
+      this.#evaluateBundlePromo(cart, productAdded);
+    }
+
+    this.#computeTotal(cart, productAdded, newSubTotal);
     this.#applyDiscountIfApplicable(cart, promoCode);
-    this.#computeTotal(cart);
   }
 }
+
+module.exports = PricingRules;
