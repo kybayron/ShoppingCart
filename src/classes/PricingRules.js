@@ -1,3 +1,5 @@
+const InvalidItemException = require('../exceptions/InvalidItemException');
+
 class PricingRules {
   constructor(products) {
     this.products = products;
@@ -15,10 +17,18 @@ class PricingRules {
   }
 
   addThreeForTwoPromo(product) {
+    if (this.products[product] === undefined) {
+      throw new InvalidItemException(product);
+    }
+
     this.promo.threeForTwo[product] = true;
   }
 
   addBulkDiscountPromo(product, minQuantity, discountPrice) {
+    if (this.products[product] === undefined) {
+      throw new InvalidItemException(product);
+    }
+
     this.promo.bulkDiscount[product] = {
       minQuantity,
       discountPrice,
@@ -26,6 +36,10 @@ class PricingRules {
   }
 
   addBundlePromo(product, minQuantity, bonusProduct, bonusQuantity) {
+    if (this.products[product] === undefined) {
+      throw new InvalidItemException(product);
+    }
+
     this.promo.bundle[product] = { minQuantity, bonusProduct, bonusQuantity };
   }
 
@@ -71,11 +85,12 @@ class PricingRules {
 
     const { bonusProduct, bonusQuantity } = bundlePromo;
 
-    if (cartInstance.items[bonusProduct]) {
-      cartInstance.items[bonusProduct].quantity += bonusQuantity;
-      cartInstance.items[bonusProduct].freebies += bonusQuantity;
+    let extraProductToAdd = cartInstance.items[bonusProduct];
+    if (extraProductToAdd) {
+      extraProductToAdd.quantity += bonusQuantity;
+      extraProductToAdd.freebies += bonusQuantity;
     } else {
-      cartInstance.items[bonusProduct] = {
+      extraProductToAdd = {
         name: this.products[bonusProduct].name,
         quantity: 1,
         freebies: bonusQuantity,
