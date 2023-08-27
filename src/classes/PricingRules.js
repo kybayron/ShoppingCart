@@ -112,7 +112,7 @@ class PricingRules {
   }
 
   #getDiscountIfApplicable(promoCode) {
-    return this.discountCodes[promoCode] ?? 0;
+    return this.discountCodes[promoCode] ?? this.discount;
   }
 
   #applyDiscountIfApplicable = (cart, promoCode) => {
