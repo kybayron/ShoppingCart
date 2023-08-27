@@ -105,7 +105,7 @@ class PricingRules {
     } else {
       cartInstance.items[bonusProduct] = {
         name: this.products[bonusProduct].name,
-        quantity: 1,
+        quantity: bonusQuantity,
         freebies: bonusQuantity,
       };
     }
